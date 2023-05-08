@@ -7,6 +7,7 @@
 #include "tools.hpp"
 
 using std::cout;
+using std::endl;
 using std::string;
 
 #define Server TcpListener;
@@ -21,31 +22,31 @@ int main(int ac, char** av) {
     TcpListener* server = new TcpListener("localhost", av[1]);
     int server_fd = server->get_raw_fd();
     cout << G(DEBUG) << " Server is connected "
-         << "port:" << av[1] << " fd:" << server_fd << std::endl;
+         << "port:" << av[1] << " fd:" << server_fd << endl;
     Kqueue kq;
     char buff[1024] = {0};
     kq.attach(server);
 
     loop {
+        cout << G(INFO) << " Waiting  ..." << endl;
         IListener& event = kq.get_event();
         if (event.get_raw_fd() == server_fd) {
             TcpStream& client = dynamic_cast<TcpListener*>(&event)->accept();
             kq.attach(&client);
             cout << G(DEBUG)
-                 << " client connected fd == " << client.get_raw_fd()
-                 << std::endl;
+                 << " Client connected fd == " << client.get_raw_fd() << endl;
         } else {
             TcpStream* client = dynamic_cast<TcpStream*>(&event);
             bzero(buff, 1024);
             if (client->read(buff, client->get_kevent().data) == 0) {
                 cout << G(DEBUG)
-                     << " client detached fd == " << client->get_raw_fd()
-                     << std::endl;
+                     << " Client detached fd == " << client->get_raw_fd()
+                     << endl;
                 kq.detach(client);
                 delete client;
             } else {
-                cout << G(INFO) << " message : " << tools::trim(buff, "\n")
-                     << std::endl;
+                cout << G(INFO) << " Message : " << tools::trim(buff, "\n")
+                     << endl;
             }
         }
     }
